@@ -108,7 +108,6 @@ server/coverage/
 
 # backend envs
 server/.env
-server/.env.*
 
 # sqlite / db files
 *.sqlite
