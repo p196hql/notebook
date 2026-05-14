@@ -1,4 +1,4 @@
-# Notebook 2
+# Notebook AI
 
 Small full-stack notebook chat app.
 
