@@ -12,6 +12,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/lib/page-title";
 
 const signupInitialState = {
@@ -40,10 +41,11 @@ function validateSignup(values) {
   return errors;
 }
 
-function SignupPage({ authLoading, onSignup }) {
+function SignupPage() {
   usePageTitle("Sign up");
 
   const navigate = useNavigate();
+  const { authLoading, onSignup } = useAuth();
   const [form, setForm] = useState(signupInitialState);
   const [errors, setErrors] = useState({});
   const formRef = useRef(null);

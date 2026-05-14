@@ -25,6 +25,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useNotebooks } from "@/hooks/use-notebooks";
 import { usePageTitle } from "@/lib/page-title";
 
 function formatFileSize(size) {
@@ -35,11 +36,12 @@ function formatFileSize(size) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function CreateNotebookPage({ onCreate, creatingNotebook }) {
+function CreateNotebookPage() {
   usePageTitle("Create notebook");
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { creatingNotebook, onCreateNotebook } = useNotebooks();
   const [name, setName] = useState(location.state?.draftName ?? "");
   const [files, setFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -113,7 +115,7 @@ function CreateNotebookPage({ onCreate, creatingNotebook }) {
       return;
     }
 
-    const result = await onCreate({
+    const result = await onCreateNotebook({
       name,
       files: files.map((item) => item.file),
     });

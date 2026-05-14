@@ -1,8 +1,10 @@
 import { Loader2 } from "lucide-react";
 import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
-function ProtectedRoute({ isReady, user, children }) {
+function ProtectedRoute({ children }) {
   const location = useLocation();
+  const { isReady, user } = useAuth();
 
   if (!isReady) {
     return (
@@ -19,7 +21,9 @@ function ProtectedRoute({ isReady, user, children }) {
   return children;
 }
 
-function GuestRoute({ isReady, user, children }) {
+function GuestRoute({ children }) {
+  const { isReady, user } = useAuth();
+
   if (!isReady) {
     return (
       <main className="flex min-h-screen items-center justify-center">

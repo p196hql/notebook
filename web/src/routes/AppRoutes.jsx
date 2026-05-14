@@ -8,66 +8,35 @@ import { NotebookPage } from "@/pages/NotebookPage";
 import { SignupPage } from "@/pages/SignupPage";
 import { GuestRoute, ProtectedRoute } from "@/routes/guards";
 
-function AppRoutes({
-  authLoading,
-  creatingNotebook,
-  isReady,
-  notebooks,
-  onCreateNotebook,
-  onDeleteConversation,
-  onDeleteNotebook,
-  onRenameConversation,
-  onRenameNotebook,
-  onLogin,
-  onLogout,
-  onSignup,
-  user,
-}) {
+function AppRoutes() {
   return (
     <Routes>
       <Route
         path="/login"
         element={
-          <GuestRoute isReady={isReady} user={user}>
-            <LoginPage authLoading={authLoading} onLogin={onLogin} />
+          <GuestRoute>
+            <LoginPage />
           </GuestRoute>
         }
       />
       <Route
         path="/signup"
         element={
-          <GuestRoute isReady={isReady} user={user}>
-            <SignupPage authLoading={authLoading} onSignup={onSignup} />
+          <GuestRoute>
+            <SignupPage />
           </GuestRoute>
         }
       />
       <Route
         path="/"
         element={
-          <ProtectedRoute isReady={isReady} user={user}>
-            <AppShell
-              authLoading={authLoading}
-              notebooks={notebooks}
-              onDeleteConversation={onDeleteConversation}
-              onDeleteNotebook={onDeleteNotebook}
-              onRenameConversation={onRenameConversation}
-              onRenameNotebook={onRenameNotebook}
-              user={user}
-              onLogout={onLogout}
-            />
+          <ProtectedRoute>
+            <AppShell />
           </ProtectedRoute>
         }
       >
-        <Route index element={<HomePage notebooks={notebooks} />} />
-        <Route
-          path="notebooks/new"
-          element={
-            <CreateNotebookPage
-              creatingNotebook={creatingNotebook}
-              onCreate={onCreateNotebook}
-            />
-          }
-        />
+        <Route index element={<HomePage />} />
+        <Route path="notebooks/new" element={<CreateNotebookPage />} />
         <Route path="notebooks/:notebookId" element={<NotebookPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

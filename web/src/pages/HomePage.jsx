@@ -11,10 +11,12 @@ import { NavLink } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNotebooks } from "@/hooks/use-notebooks";
 import { usePageTitle } from "@/lib/page-title";
 
-function HomePage({ notebooks }) {
+function HomePage() {
   usePageTitle("Home");
+  const { notebooks } = useNotebooks();
 
   const stats = useMemo(() => {
     const ready = notebooks.filter((n) => n.status === "ready").length;

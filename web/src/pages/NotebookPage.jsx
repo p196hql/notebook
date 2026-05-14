@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -24,7 +24,9 @@ import { Children, isValidElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { apiFetch } from "@/lib/api";
+import { useAutosizeTextarea } from "@/hooks/use-autosize-textarea";
+import { useNotebookSession } from "@/hooks/use-notebook-session";
+import { usePersistentState } from "@/hooks/use-persistent-state";
 import { usePageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 
@@ -44,18 +46,6 @@ function getScrollParent(node) {
     current = current.parentElement;
   }
   return document.scrollingElement;
-}
-
-function sortConversations(items) {
-  return [...items].sort((a, b) => {
-    const aTime = new Date(
-      a.lastMessageAt ?? a.updatedAt ?? a.createdAt,
-    ).getTime();
-    const bTime = new Date(
-      b.lastMessageAt ?? b.updatedAt ?? b.createdAt,
-    ).getTime();
-    return bTime - aTime;
-  });
 }
 
 function formatRelative(dateString) {
@@ -451,28 +441,29 @@ function NotebookPage() {
   const requestedConversationId = searchParams.get("chat");
   const isDraftConversation = searchParams.get("new") === "1";
   const isChatView = Boolean(requestedConversationId) || isDraftConversation;
-  const [notebook, setNotebook] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [activeConversationId, setActiveConversationId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [prompt, setPrompt] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [showCitations, setShowCitations] = useState(() => {
-    if (typeof window === "undefined") {
-      return true;
-    }
-
-    try {
-      return window.localStorage.getItem(CITATIONS_PREFERENCE_KEY) !== "false";
-    } catch {
-      return true;
-    }
-  });
+  const [showCitations, setShowCitations] = usePersistentState(
+    CITATIONS_PREFERENCE_KEY,
+    true,
+  );
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const {
+    activeConversationId,
+    conversations,
+    handleCreateConversation,
+    loading,
+    messages,
+    messagesLoading,
+    notebook,
+    sendMessage,
+    sending,
+  } = useNotebookSession({
+    isDraftConversation,
+    notebookId,
+    requestedConversationId,
+    setSearchParams,
+  });
 
   const currentConversationId = requestedConversationId
     ? activeConversationId
@@ -495,95 +486,6 @@ function NotebookPage() {
   usePageTitle(pageTitle);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        CITATIONS_PREFERENCE_KEY,
-        String(showCitations),
-      );
-    } catch {
-      // Ignore storage failures and keep the in-memory preference.
-    }
-  }, [showCitations]);
-
-  useEffect(() => {
-    async function loadNotebookOverview() {
-      setLoading(true);
-      try {
-        const data = await apiFetch(`/notebooks/${notebookId}`);
-        setNotebook(data.notebook);
-        setConversations(sortConversations(data.conversations ?? []));
-        setActiveConversationId(null);
-        setMessages([]);
-        setPrompt("");
-      } catch (error) {
-        toast.error(error.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadNotebookOverview();
-  }, [notebookId]);
-
-  useEffect(() => {
-    if (!isProcessingNotebook) {
-      return undefined;
-    }
-
-    const intervalId = window.setInterval(async () => {
-      try {
-        const data = await apiFetch(`/notebooks/${notebookId}`);
-        setNotebook(data.notebook);
-        setConversations(sortConversations(data.conversations ?? []));
-      } catch (error) {
-        console.error("[notebook] processing poll failed", error);
-      }
-    }, 3000);
-
-    return () => window.clearInterval(intervalId);
-  }, [isProcessingNotebook, notebookId]);
-
-  useEffect(() => {
-    async function loadConversation() {
-      if (!requestedConversationId) {
-        setActiveConversationId(null);
-        setMessages([]);
-        return;
-      }
-
-      setMessagesLoading(true);
-      try {
-        const data = await apiFetch(
-          `/notebooks/${notebookId}?conversationId=${encodeURIComponent(requestedConversationId)}`,
-        );
-        setActiveConversationId(data.activeConversationId);
-        setMessages(data.messages);
-        if (data.activeConversationId) {
-          setSearchParams(
-            { chat: data.activeConversationId },
-            { replace: true },
-          );
-        } else {
-          setSearchParams({}, { replace: true });
-        }
-      } catch (error) {
-        toast.error(error.message);
-      } finally {
-        setMessagesLoading(false);
-      }
-    }
-
-    if (!isDraftConversation) {
-      loadConversation();
-    }
-  }, [
-    isDraftConversation,
-    notebookId,
-    requestedConversationId,
-    setSearchParams,
-  ]);
-
-  useLayoutEffect(() => {
     if (!isChatView) return undefined;
     let timeoutId = 0;
 
@@ -611,93 +513,6 @@ function NotebookPage() {
       window.clearTimeout(timeoutId);
     };
   }, [isChatView, messages.length, messagesLoading, sending]);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = "0px";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 220)}px`;
-  }, [prompt]);
-
-  async function handleCreateConversation() {
-    setActiveConversationId(null);
-    setMessages([]);
-    setPrompt("");
-    setSearchParams({ new: "1" });
-  }
-
-  async function sendMessage(message) {
-    if (!message) return;
-
-    const tempUserMessage = {
-      id: `temp-user-${crypto.randomUUID()}`,
-      role: "user",
-      content: message,
-      citations: [],
-    };
-    const tempAssistantMessage = {
-      id: `temp-assistant-${crypto.randomUUID()}`,
-      role: "assistant",
-      content: "",
-      citations: [],
-      isLoading: true,
-    };
-
-    setSending(true);
-    setPrompt("");
-    setMessages((current) => [
-      ...current,
-      tempUserMessage,
-      tempAssistantMessage,
-    ]);
-
-    try {
-      const data = await apiFetch(`/notebooks/${notebookId}/chat`, {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          conversationId: currentConversationId,
-        }),
-      });
-
-      setActiveConversationId(data.conversation.id);
-      setConversations((current) => {
-        const next = current.filter((e) => e.id !== data.conversation.id);
-        return sortConversations([data.conversation, ...next]);
-      });
-      setSearchParams({ chat: data.conversation.id }, { replace: true });
-      setMessages((current) =>
-        current.map((entry) => {
-          if (entry.id === tempUserMessage.id) return data.userMessage;
-          if (entry.id === tempAssistantMessage.id) return data.assistantMessage;
-          return entry;
-        }),
-      );
-    } catch (error) {
-      setMessages((current) =>
-        current.filter(
-          (entry) =>
-            entry.id !== tempUserMessage.id &&
-            entry.id !== tempAssistantMessage.id,
-        ),
-      );
-      toast.error(error.message);
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    await sendMessage(prompt.trim());
-  }
-
-  async function handlePromptKeyDown(event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      await sendMessage(prompt.trim());
-    }
-  }
 
   if (loading) {
     return (
@@ -896,38 +711,82 @@ function NotebookPage() {
 
       {isReadyToChat ? (
         <div className="border-t bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
-          <form
-            className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-2xl border bg-card px-3 py-2 shadow-soft focus-within:border-primary/50 focus-within:ring-3 focus-within:ring-primary/15"
-            onSubmit={handleSubmit}
-          >
-            <Textarea
-              ref={textareaRef}
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              onKeyDown={handlePromptKeyDown}
-              placeholder="Ask about this notebook…"
-              rows={1}
-              className="max-h-55 min-h-9 flex-1 resize-none overflow-y-auto border-0 bg-transparent! px-1.5 py-2 text-[15px] leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent!"
-            />
-            <Button
-              type="submit"
-              disabled={sending || !prompt.trim()}
-              aria-label="Send message"
-              className="size-9 shrink-0 rounded-xl bg-gradient-primary p-0 text-primary-foreground shadow-elegant hover:opacity-90 disabled:opacity-40"
-            >
-              {sending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Send className="size-4" />
-              )}
-            </Button>
-          </form>
+          <ChatComposer
+            key={`${notebookId}:${requestedConversationId ?? "draft"}:${isDraftConversation ? "new" : "existing"}`}
+            currentConversationId={currentConversationId}
+            onSend={sendMessage}
+            sending={sending}
+            textareaRef={textareaRef}
+          />
           <p className="mx-auto mt-2 max-w-4xl px-1 text-[11px] text-muted-foreground">
             Enter to send · Shift+Enter for newline
           </p>
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ChatComposer({
+  currentConversationId,
+  onSend,
+  sending,
+  textareaRef,
+}) {
+  const [prompt, setPrompt] = useState("");
+
+  useAutosizeTextarea(textareaRef, prompt);
+
+  async function submitPrompt() {
+    const nextPrompt = prompt.trim();
+
+    if (!nextPrompt) {
+      return;
+    }
+
+    setPrompt("");
+    await onSend(nextPrompt, currentConversationId);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    await submitPrompt();
+  }
+
+  async function handlePromptKeyDown(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      await submitPrompt();
+    }
+  }
+
+  return (
+    <form
+      className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-2xl border bg-card px-3 py-2 shadow-soft focus-within:border-primary/50 focus-within:ring-3 focus-within:ring-primary/15"
+      onSubmit={handleSubmit}
+    >
+      <Textarea
+        ref={textareaRef}
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        onKeyDown={handlePromptKeyDown}
+        placeholder="Ask about this notebook…"
+        rows={1}
+        className="max-h-55 min-h-9 flex-1 resize-none overflow-y-auto border-0 bg-transparent! px-1.5 py-2 text-[15px] leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent!"
+      />
+      <Button
+        type="submit"
+        disabled={sending || !prompt.trim()}
+        aria-label="Send message"
+        className="size-9 shrink-0 rounded-xl bg-gradient-primary p-0 text-primary-foreground shadow-elegant hover:opacity-90 disabled:opacity-40"
+      >
+        {sending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Send className="size-4" />
+        )}
+      </Button>
+    </form>
   );
 }
 

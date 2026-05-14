@@ -42,6 +42,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { useNotebooks } from "@/hooks/use-notebooks";
 import { cn } from "@/lib/utils";
 
 function getInitials(text) {
@@ -53,16 +55,15 @@ function getInitials(text) {
     .join("");
 }
 
-function AppShell({
-  authLoading,
-  notebooks,
-  onDeleteConversation,
-  onDeleteNotebook,
-  onRenameConversation,
-  onRenameNotebook,
-  user,
-  onLogout,
-}) {
+function AppShell() {
+  const { authLoading, onLogout, user } = useAuth();
+  const {
+    notebooks,
+    onDeleteConversation,
+    onDeleteNotebook,
+    onRenameConversation,
+    onRenameNotebook,
+  } = useNotebooks();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [pendingNotebookId, setPendingNotebookId] = useState("");
@@ -311,7 +312,16 @@ function AppShell({
               const isExpanded =
                 expandedNotebookIds[notebook.id] ??
                 activeNotebookId === notebook.id;
-              const isNotebookActive = activeNotebookId === notebook.id;
+              const isNotebookSelected = activeNotebookId === notebook.id;
+              const hasActiveConversationInNotebook =
+                isNotebookSelected &&
+                notebook.conversations?.some(
+                  (conversation) => conversation.id === activeConversationId,
+                );
+              const isNotebookActive =
+                isNotebookSelected && !hasActiveConversationInNotebook;
+              const isNotebookContextual =
+                hasActiveConversationInNotebook || (isExpanded && !isNotebookActive);
               const hasChats = (notebook.conversations?.length ?? 0) > 0;
               const isNotebookPending = pendingNotebookId === notebook.id;
               const initials = getInitials(notebook.name) || "NB";
@@ -349,6 +359,8 @@ function AppShell({
                       "group/item flex items-center gap-1 rounded-lg pr-1 transition-colors",
                       isNotebookActive
                         ? "bg-sidebar-accent"
+                        : isNotebookContextual
+                          ? "bg-sidebar-accent/40"
                         : "hover:bg-sidebar-accent/60",
                     )}
                   >
@@ -373,13 +385,22 @@ function AppShell({
                           "flex size-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-semibold",
                           isNotebookActive
                             ? "bg-gradient-primary text-primary-foreground"
+                            : isNotebookContextual
+                              ? "bg-sidebar-accent/80 text-sidebar-foreground"
                             : "bg-sidebar-accent text-sidebar-accent-foreground",
                         )}
                       >
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium leading-tight">
+                        <p
+                          className={cn(
+                            "truncate text-sm font-medium leading-tight",
+                            isNotebookContextual && !isNotebookActive
+                              ? "text-foreground/90"
+                              : "",
+                          )}
+                        >
                           {notebook.name}
                         </p>
                         <p className="truncate text-[11px] text-muted-foreground">
@@ -453,7 +474,14 @@ function AppShell({
                   </div>
 
                   {isExpanded && hasChats ? (
-                    <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-sidebar-border pl-2">
+                    <div
+                      className={cn(
+                        "ml-4 mt-0.5 flex flex-col gap-0.5 border-l pl-2",
+                        hasActiveConversationInNotebook
+                          ? "border-primary/30"
+                          : "border-sidebar-border",
+                      )}
+                    >
                       {notebook.conversations.map((conversation) => {
                         const isConversationActive =
                           isNotebookActive &&
