@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import mongoose from "mongoose";
 
+import { env } from "../config/env.js";
 import { runPythonPipeline } from "../lib/python.js";
 import {
   deleteNotebookAsset,
@@ -171,6 +172,13 @@ function toStoredSourceFile(file) {
 }
 
 async function removeNotebookAssets(sourceFiles) {
+  if (env.uploadStorage === "local") {
+    await Promise.allSettled(
+      (sourceFiles ?? []).map((file) => deleteNotebookAsset(file.cloudinaryPublicId)),
+    );
+    return;
+  }
+
   const results = await Promise.allSettled(
     (sourceFiles ?? []).map(async (file) => {
       const resourceTypes = [
@@ -238,12 +246,12 @@ async function processNotebookInBackground(notebook, files) {
   try {
     for (const file of files) {
       console.info(
-        `[notebook:${notebook._id}] uploading file to Cloudinary: ${file.originalname}`,
+        `[notebook:${notebook._id}] storing uploaded file via ${env.uploadStorage}: ${file.originalname}`,
       );
       const asset = await uploadNotebookAsset(file.path, file.originalname);
 
       uploadedFiles.push({
-        localPath: file.path,
+        localPath: asset.local_path ?? file.path,
         originalName: file.originalname,
         mimeType: file.mimetype,
         size: file.size,

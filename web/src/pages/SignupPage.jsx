@@ -124,7 +124,11 @@ function SignupPage() {
         </p>
       }
     >
-      <form ref={formRef} className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <form
+        ref={formRef}
+        className="flex flex-col gap-4"
+        onSubmit={handleSubmit}
+      >
         <FieldGroup>
           <Field data-invalid={Boolean(errors.fullName) || undefined}>
             <FieldLabel htmlFor="signup-name">Full name</FieldLabel>

@@ -14,7 +14,8 @@ export function useNotebookSession({
   isDraftConversation,
   setSearchParams,
 }) {
-  const { refreshNotebooks, syncConversation, syncNotebookDetail } = useNotebooks();
+  const { refreshNotebooks, syncConversation, syncNotebookDetail } =
+    useNotebooks();
   const [notebook, setNotebook] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -76,11 +77,17 @@ export function useNotebookSession({
       setMessagesLoading(true);
 
       try {
-        const data = await fetchNotebookDetail(notebookId, requestedConversationId);
+        const data = await fetchNotebookDetail(
+          notebookId,
+          requestedConversationId,
+        );
         setActiveConversationId(data.activeConversationId);
         setMessages(data.messages);
         if (data.activeConversationId) {
-          setSearchParams({ chat: data.activeConversationId }, { replace: true });
+          setSearchParams(
+            { chat: data.activeConversationId },
+            { replace: true },
+          );
         } else {
           setSearchParams({}, { replace: true });
         }
@@ -142,14 +149,17 @@ export function useNotebookSession({
       startTransition(() => {
         setActiveConversationId(data.conversation.id);
         setConversations((current) => {
-          const next = current.filter((entry) => entry.id !== data.conversation.id);
+          const next = current.filter(
+            (entry) => entry.id !== data.conversation.id,
+          );
           return sortConversations([data.conversation, ...next]);
         });
         setSearchParams({ chat: data.conversation.id }, { replace: true });
         setMessages((current) =>
           current.map((entry) => {
             if (entry.id === tempUserMessage.id) return data.userMessage;
-            if (entry.id === tempAssistantMessage.id) return data.assistantMessage;
+            if (entry.id === tempAssistantMessage.id)
+              return data.assistantMessage;
             return entry;
           }),
         );

@@ -81,7 +81,10 @@ function getNodeText(node) {
 function CodeBlock({ children, ...props }) {
   const [copied, setCopied] = useState(false);
   const resetTimeoutRef = useRef(null);
-  const codeText = Children.toArray(children).map(getNodeText).join("").replace(/\n$/, "");
+  const codeText = Children.toArray(children)
+    .map(getNodeText)
+    .join("")
+    .replace(/\n$/, "");
 
   useEffect(() => {
     return () => {
@@ -144,16 +147,37 @@ function MarkdownMessage({ content }) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          h1: (p) => <h1 className="mt-2 mb-4 text-2xl font-semibold tracking-tight" {...p} />,
-          h2: (p) => <h2 className="mt-6 mb-3 text-xl font-semibold tracking-tight" {...p} />,
-          h3: (p) => <h3 className="mt-5 mb-2 text-lg font-semibold tracking-tight" {...p} />,
-          h4: (p) => <h4 className="mt-4 mb-2 text-base font-semibold" {...p} />,
+          h1: (p) => (
+            <h1
+              className="mt-2 mb-4 text-2xl font-semibold tracking-tight"
+              {...p}
+            />
+          ),
+          h2: (p) => (
+            <h2
+              className="mt-6 mb-3 text-xl font-semibold tracking-tight"
+              {...p}
+            />
+          ),
+          h3: (p) => (
+            <h3
+              className="mt-5 mb-2 text-lg font-semibold tracking-tight"
+              {...p}
+            />
+          ),
+          h4: (p) => (
+            <h4 className="mt-4 mb-2 text-base font-semibold" {...p} />
+          ),
           p: (p) => <p className="my-3 whitespace-pre-wrap leading-7" {...p} />,
           strong: (p) => <strong className="font-semibold" {...p} />,
           em: (p) => <em className="italic" {...p} />,
           u: (p) => <u className="underline underline-offset-2" {...p} />,
-          ul: (p) => <ul className="my-3 ml-5 flex list-disc flex-col gap-2" {...p} />,
-          ol: (p) => <ol className="my-3 ml-5 flex list-decimal flex-col gap-2" {...p} />,
+          ul: (p) => (
+            <ul className="my-3 ml-5 flex list-disc flex-col gap-2" {...p} />
+          ),
+          ol: (p) => (
+            <ol className="my-3 ml-5 flex list-decimal flex-col gap-2" {...p} />
+          ),
           li: (p) => <li className="pl-1" {...p} />,
           blockquote: (p) => (
             <blockquote
@@ -197,10 +221,7 @@ function MarkdownMessage({ content }) {
           ),
           thead: (p) => <thead className="bg-muted/60" {...p} />,
           th: (p) => (
-            <th
-              className="border-b px-3 py-2 text-left font-medium"
-              {...p}
-            />
+            <th className="border-b px-3 py-2 text-left font-medium" {...p} />
           ),
           td: (p) => <td className="border-t px-3 py-2 align-top" {...p} />,
         }}
@@ -216,7 +237,9 @@ function MessageBubble({ message, showCitations }) {
   const isLoading = message.role === "assistant" && message.isLoading;
 
   return (
-    <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
+    <div
+      className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}
+    >
       <div
         className={cn(
           "flex min-w-0 max-w-[85%] flex-col gap-3 rounded-2xl px-4 py-3 sm:max-w-2xl",
@@ -491,8 +514,7 @@ function NotebookPage() {
 
     const scrollToBottom = () => {
       const container =
-        messagesContainerRef.current ??
-        getScrollParent(messagesEndRef.current);
+        messagesContainerRef.current ?? getScrollParent(messagesEndRef.current);
       if (!container) return;
       container.scrollTo({
         top: container.scrollHeight,
@@ -583,10 +605,7 @@ function NotebookPage() {
               asChild
               className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90"
             >
-              <NavLink
-                to="/notebooks/new"
-                state={{ draftName: notebook.name }}
-              >
+              <NavLink to="/notebooks/new" state={{ draftName: notebook.name }}>
                 Try again
               </NavLink>
             </Button>
@@ -727,12 +746,7 @@ function NotebookPage() {
   );
 }
 
-function ChatComposer({
-  currentConversationId,
-  onSend,
-  sending,
-  textareaRef,
-}) {
+function ChatComposer({ currentConversationId, onSend, sending, textareaRef }) {
   const [prompt, setPrompt] = useState("");
 
   useAutosizeTextarea(textareaRef, prompt);

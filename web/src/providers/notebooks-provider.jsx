@@ -13,7 +13,11 @@ import {
 } from "@/lib/notebooks";
 import { sortConversations, sortNotebooks } from "@/lib/notebook-utils";
 
-function mergeNotebook(current, notebook, conversations = current?.conversations ?? []) {
+function mergeNotebook(
+  current,
+  notebook,
+  conversations = current?.conversations ?? [],
+) {
   return {
     ...current,
     ...notebook,
@@ -132,7 +136,10 @@ function NotebooksProvider({ children }) {
         return {
           ...notebook,
           lastMessageAt: conversation.lastMessageAt ?? notebook.lastMessageAt,
-          conversations: sortConversations([conversation, ...nextConversations]),
+          conversations: sortConversations([
+            conversation,
+            ...nextConversations,
+          ]),
         };
       });
     },
@@ -159,7 +166,10 @@ function NotebooksProvider({ children }) {
   const handleDeleteConversation = useCallback(
     async (notebookId, conversationId) => {
       try {
-        const data = await deleteConversationRequest(notebookId, conversationId);
+        const data = await deleteConversationRequest(
+          notebookId,
+          conversationId,
+        );
 
         updateNotebookState(notebookId, (notebook) => ({
           ...notebook,

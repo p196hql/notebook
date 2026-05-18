@@ -32,6 +32,8 @@ export const env = {
     apiKey: readEnv("CLOUDINARY_API_KEY"),
     apiSecret: readEnv("CLOUDINARY_API_SECRET"),
   },
+  uploadStorage: readEnv("UPLOAD_STORAGE", "cloudinary"),
+  localUploadsBasePath: readEnv("LOCAL_UPLOADS_BASE_PATH", "/uploads"),
   aiProvider: {
     apiKey: readEnv("AI_API_KEY", readEnv("OPENAI_API_KEY", readEnv("OPENROUTER_API_KEY"))),
     baseUrl: readEnv(

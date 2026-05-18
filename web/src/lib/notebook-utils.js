@@ -1,5 +1,7 @@
 function getSortTime(entry) {
-  return new Date(entry.lastMessageAt ?? entry.updatedAt ?? entry.createdAt ?? 0).getTime();
+  return new Date(
+    entry.lastMessageAt ?? entry.updatedAt ?? entry.createdAt ?? 0,
+  ).getTime();
 }
 
 export function sortConversations(items) {

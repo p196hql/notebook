@@ -12,11 +12,7 @@ import {
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -66,7 +62,8 @@ function CreateNotebookPage() {
   function addFiles(fileList) {
     setSubmitError("");
     const accepted = Array.from(fileList ?? []).filter(
-      (file) => file.type === "application/pdf" || file.type.startsWith("image/"),
+      (file) =>
+        file.type === "application/pdf" || file.type.startsWith("image/"),
     );
     const rejected = (fileList?.length ?? 0) - accepted.length;
     if (rejected > 0) {

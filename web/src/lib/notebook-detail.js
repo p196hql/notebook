@@ -8,7 +8,10 @@ export async function fetchNotebookDetail(notebookId, conversationId) {
   return apiFetch(`/notebooks/${notebookId}${search}`);
 }
 
-export async function sendNotebookChat(notebookId, { message, conversationId }) {
+export async function sendNotebookChat(
+  notebookId,
+  { message, conversationId },
+) {
   return apiFetch(`/notebooks/${notebookId}/chat`, {
     method: "POST",
     body: JSON.stringify({

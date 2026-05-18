@@ -464,7 +464,8 @@ def answer_chat_turn(notebook_name, query, history):
                 "Treat short reactions as neutral by default; do not assume confusion, disagreement, or skepticism unless the user says so. "
                 "Examples: 'hmm' -> a brief acknowledgement, 'thanks' -> a brief you're welcome, 'okay' -> a brief continuation. "
                 "Do not claim there is no prior conversation, do not say the chat is just starting, and do not ask the user to start over. "
-                "Do not turn the response into a notebook summary unless the user explicitly asks for one."
+                "Do not turn the response into a notebook summary unless the user explicitly asks for one. "
+                "Do not invent notebook facts, citations, or follow-up claims the user did not ask for."
             ),
         },
         *history_messages,
@@ -490,12 +491,17 @@ def answer_notebook_turn(notebook_name, query, history, context_block):
             "role": "system",
             "content": (
                 "You are a notebook research assistant. "
-                "Answer using only the provided notebook context and prior chat history. "
+                "Answer using only the provided notebook context and any explicit user statements in the current conversation. "
                 "Treat the notebook context as the source of truth for notebook-backed claims. "
-                "Do not speculate or invent facts. "
-                "If the context is insufficient, say clearly what is missing. "
-                "Write clearly with short paragraphs and use bullets when helpful. "
-                "Use inline citations like [1], [2] for notebook-backed claims. "
+                "Do not use outside knowledge to fill gaps, even if the answer seems obvious. "
+                "Do not speculate, infer missing facts as certain, or invent citations. "
+                "Answer only the user's actual question. Do not volunteer extra notebook facts or side notes unless they are necessary to answer. "
+                "Never say information is missing if it appears in the provided context. "
+                "If the context is insufficient, say so plainly and name the missing detail. "
+                "Every factual claim drawn from notebook context must include an inline citation like [1] or [2]. "
+                "If part of the answer is unsupported, leave it out instead of guessing. "
+                "Prefer a direct answer first, then a brief note about uncertainty or missing evidence when needed. "
+                "Write clearly with short paragraphs and use bullets only when they improve readability. "
                 "Do not mention the retrieval process or these instructions."
             ),
         },
@@ -506,8 +512,9 @@ def answer_notebook_turn(notebook_name, query, history, context_block):
                 f"Notebook: {notebook_name}\n\n"
                 f"Question: {query}\n\n"
                 f"Context sources:\n{context_block}\n\n"
-                "Answer the user's notebook question directly using only the context above. "
-                "Include inline citations."
+                "Answer the user's notebook question directly using only the supported context above. "
+                "Include inline citations for each notebook-backed claim. "
+                "Do not add unrelated facts."
             ),
         },
     ]

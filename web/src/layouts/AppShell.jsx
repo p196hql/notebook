@@ -145,7 +145,6 @@ function AppShell() {
     });
   }
 
-
   function openDeleteConversationDialog(notebook, conversation) {
     setConfirmState({
       type: "conversation",
@@ -321,7 +320,8 @@ function AppShell() {
               const isNotebookActive =
                 isNotebookSelected && !hasActiveConversationInNotebook;
               const isNotebookContextual =
-                hasActiveConversationInNotebook || (isExpanded && !isNotebookActive);
+                hasActiveConversationInNotebook ||
+                (isExpanded && !isNotebookActive);
               const hasChats = (notebook.conversations?.length ?? 0) > 0;
               const isNotebookPending = pendingNotebookId === notebook.id;
               const initials = getInitials(notebook.name) || "NB";
@@ -361,7 +361,7 @@ function AppShell() {
                         ? "bg-sidebar-accent"
                         : isNotebookContextual
                           ? "bg-sidebar-accent/40"
-                        : "hover:bg-sidebar-accent/60",
+                          : "hover:bg-sidebar-accent/60",
                     )}
                   >
                     <button
@@ -387,7 +387,7 @@ function AppShell() {
                             ? "bg-gradient-primary text-primary-foreground"
                             : isNotebookContextual
                               ? "bg-sidebar-accent/80 text-sidebar-foreground"
-                            : "bg-sidebar-accent text-sidebar-accent-foreground",
+                              : "bg-sidebar-accent text-sidebar-accent-foreground",
                         )}
                       >
                         {initials}
@@ -512,9 +512,7 @@ function AppShell() {
                               <span
                                 className={cn(
                                   "block truncate",
-                                  isConversationActive
-                                    ? "text-foreground"
-                                    : "",
+                                  isConversationActive ? "text-foreground" : "",
                                 )}
                               >
                                 {conversation.title || "New chat"}

@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import path from "node:path";
 
 import { env } from "./config/env.js";
 import { securityHeaders } from "./middleware/security.middleware.js";
@@ -77,6 +78,10 @@ function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: false, limit: "100kb" }));
   app.use(cookieParser());
+  app.use(
+    env.localUploadsBasePath,
+    express.static(path.resolve(process.cwd(), env.uploadsPath, "assets")),
+  );
 
   app.use("/api", router);
 

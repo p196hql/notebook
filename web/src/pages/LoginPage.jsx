@@ -111,7 +111,11 @@ function LoginPage() {
         </p>
       }
     >
-      <form ref={formRef} className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <form
+        ref={formRef}
+        className="flex flex-col gap-4"
+        onSubmit={handleSubmit}
+      >
         <FieldGroup>
           <Field data-invalid={Boolean(errors.email) || undefined}>
             <FieldLabel htmlFor="login-email">Email</FieldLabel>

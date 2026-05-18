@@ -42,7 +42,8 @@ Configure environment:
 
 - Copy or edit `server/.env`
 - Set `MONGO_URI`
-- Set the Cloudinary values
+- Set `UPLOAD_STORAGE=local` for a fully offline setup. In that mode, uploaded files are stored under `server/storage/rag/uploads/assets` and served from `LOCAL_UPLOADS_BASE_PATH`.
+- If you keep `UPLOAD_STORAGE=cloudinary`, set the Cloudinary values
 - Set the AI provider values
 - Optional: override `QDRANT_PATH` and `UPLOADS_PATH` if you want different RAG storage locations
 
@@ -100,6 +101,8 @@ AI_BASE_URL=https://openrouter.ai/api/v1
 AI_LLM_MODEL=openai/gpt-4.1-mini
 AI_EMBEDDING_MODEL=text-embedding-3-small
 AI_RERANK_MODEL=...
+UPLOAD_STORAGE=local
+LOCAL_UPLOADS_BASE_PATH=/uploads
 AI_APP_NAME=Notebook 2
 AI_SITE_URL=http://localhost:5173
 QDRANT_PATH=storage/rag/qdrant
@@ -109,5 +112,6 @@ UPLOADS_PATH=storage/rag/uploads
 Notes:
 
 - `AI_RERANK_MODEL` is optional. If your provider does not support `/rerank`, the app falls back to the vector search ordering.
+- For local Ollama, use `AI_BASE_URL=http://localhost:11434/v1` and any non-empty `AI_API_KEY` such as `ollama`.
 - Existing `OPENROUTER_*` variables still work as backward-compatible aliases.
 - `OPENAI_API_KEY` and `OPENAI_BASE_URL` are also accepted as aliases.
